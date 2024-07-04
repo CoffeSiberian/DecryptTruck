@@ -15,6 +15,18 @@ Paths can be absolute or relative. Drag and drop on the executable is also suppo
 
 To download you can obtain the archive at https://github.com/CoffeSiberian/DecryptTruck/releases/latest where the executable and the SII Decrypt library are located.
 
+## Build App
+
+In order to compile the application you will first need to install Rust (https://www.rust-lang.org/tools/install) and most probably Visual Studio C++ Build tools.
+
+Then you will need to use this command to start the build.
+
+```
+cargo build --release
+```
+
+Once the process is finished. The binary will remain in `./target/release/decrypt_truck.exe` remember to also purchase your SII_Decrypt.dll for the tool to work properly.
+
 ### Project SII_Decrypt
 
 This repository makes use of SII Decrypt. A library that allows access to ATS and ETS 2 save games.
