@@ -6,7 +6,7 @@ use std::os::raw::c_uint;
 
 const DLL_NAME: &str = "SII_Decrypt.dll";
 
-type GetMemoryFormatType = extern "C" fn(arr_val: *const u8, leng: u32) -> c_uint;
+type GetMemoryFormatType = extern "C" fn(arr_val: *const u8, leng: c_uint) -> c_uint;
 type DecodeMemoryType = extern "C" fn(
     arr_val: *const u8,
     leng: c_uint,

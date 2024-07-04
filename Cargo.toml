@@ -1,5 +1,5 @@
 [package]
-name = "DecryptTruck"
+name = "decrypt_truck"
 version = "0.1.1"
 description = "Decrypt your ATS and ETS2 save games with SII_Decrypt using its DLL"
 authors = ["SiberianCoffe"]
