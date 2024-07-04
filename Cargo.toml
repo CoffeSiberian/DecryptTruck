@@ -1,0 +1,9 @@
+[package]
+name = "DecryptTruck"
+version = "0.1.0"
+description = "Decrypt your ATS and ETS2 save games with SII_Decrypt using its DLL"
+authors = ["SiberianCoffe"]
+edition = "2021"
+
+[dependencies]
+libloading = "0.8.4"
