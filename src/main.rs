@@ -27,7 +27,7 @@ fn read_file_bin(path: &String) -> Option<Vec<u8>> {
     }
 }
 
-fn save_file(path: String, file_data: &String) -> bool {
+fn save_file(path: &String, file_data: &String) -> bool {
     match write(path, file_data) {
         Ok(_) => true,
         Err(_) => false,
@@ -153,8 +153,15 @@ fn main() {
         }
     };
 
-    let dir_bin = match env::current_dir() {
-        Ok(dir) => dir.to_str().unwrap().to_string(),
+    let dir_bin = match env::current_exe() {
+        Ok(dir) => match dir.parent() {
+            Some(res) => res.to_str().unwrap().to_string(),
+            None => {
+                println!("Error getting current directory");
+                return;
+            }
+        },
+
         Err(_) => {
             println!("Error getting current directory");
             return;
@@ -180,7 +187,7 @@ fn main() {
     match memory_format {
         1 => {
             match String::from_utf8(bin_file) {
-                Ok(res) => save_file(args_paths.1, &res),
+                Ok(res) => save_file(&args_paths.1, &res),
                 Err(_) => {
                     println!("Error converting file to string");
                     return;
@@ -189,7 +196,7 @@ fn main() {
         }
         2 => {
             match descript_mem_file(&bin_file, &dir_bin) {
-                Some(res) => save_file(args_paths.1, &res),
+                Some(res) => save_file(&args_paths.1, &res),
                 None => {
                     println!("Error decrypting file");
                     return;
@@ -198,7 +205,7 @@ fn main() {
         }
         4 => {
             match descript_3nk_file(&bin_file, &dir_bin) {
-                Some(res) => save_file(args_paths.1, &res),
+                Some(res) => save_file(&args_paths.1, &res),
                 None => {
                     println!("Error decrypting file");
                     return;
