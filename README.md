@@ -1,6 +1,6 @@
 # DecryptTruck
 
-This script facilitates the decryption of the ATS and ETS 2 save game by making use of the SII Decrypt .dll library for those cases in which the saves cannot be decrypted by the normal console application.
+Decrypt your saves in the ATS and ETS 2 games with this quick little utility rewritten in Rust.
 
 ## How to use
 
@@ -27,7 +27,14 @@ cargo build --release
 
 Once the process is finished. The binary will remain in `./target/release/decrypt_truck.exe` remember to also download your SII_Decrypt.dll for the tool to work correctly.
 
-### Project SII_Decrypt
+## Credits
 
-This repository makes use of SII Decrypt. A library that allows access to ATS and ETS 2 save games.
-https://github.com/TheLazyTomcat/SII_Decrypt
+This repository is a rewrite of other projects in order to continue to support the ETS 2 and ATS save decryption. All credits for logic and discoveries to:
+
+### SII_Decrypt
+
+Original project where there is a lot of documentation https://github.com/TheLazyTomcat/SII_Decrypt
+
+### SII DecryptSharp
+
+Project where most of the logic is based on https://gitlab.com/jammerxd/sii-decryptsharp
