@@ -72,7 +72,7 @@ fn decrypt_bin_file(file_bin: Vec<u8>) -> Option<Vec<u8>> {
             None => None,
         }
     } else if file_type == SignatureType::Binary as u32 {
-        match uncompress(&file_bin) {
+        match decode(&file_bin) {
             Some(res) => Some(res),
             None => None,
         }
