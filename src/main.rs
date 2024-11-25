@@ -58,6 +58,15 @@ fn decrypt_bin_file(file_bin: Vec<u8>) -> Option<Vec<u8>> {
             None => return None,
         };
 
+        let file_type_verify = match try_read_u32(&data.data) {
+            Some(file_type) => file_type,
+            None => return None,
+        };
+
+        if file_type_verify == SignatureType::PlainText as u32 {
+            return Some(data.data);
+        }
+
         match decode(&data.data) {
             Some(res) => Some(res),
             None => None,
