@@ -25,7 +25,7 @@ Then you will need to use this command to start the build.
 cargo build --release
 ```
 
-Once the process is finished. The binary will remain in `./target/release/decrypt_truck.exe` remember to also download your SII_Decrypt.dll for the tool to work correctly.
+Once the process is finished. The binary will remain in `./target/release/decrypt_truck.exe`
 
 ## Credits
 
