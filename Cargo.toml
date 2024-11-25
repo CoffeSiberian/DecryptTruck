@@ -2,9 +2,18 @@
 name = "decrypt_truck"
 version = "1.0.0"
 edition = "2021"
+description = "Decrypt your saves in the ATS and ETS 2 games with this quick little utility rewritten in Rust"
+license = "MIT"
+authors = ["SiberianCoffe <siberiancoffe@outlook.cl>"]
+repository = "https://github.com/CoffeSiberian/DecryptTruck"
+homepage = "https://github.com/CoffeSiberian/DecryptTruck"
+readme = "README.md"
 
 [dependencies]
 aes = "0"
 cbc = "0"
 cipher = { version = "0", features = ["block-padding"] }
 flate2 = "1"
+
+[build-dependencies]
+winres = "0"
