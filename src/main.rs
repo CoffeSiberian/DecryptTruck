@@ -7,7 +7,9 @@ use std::env;
 use std::io::Write;
 use std::time::Instant;
 use std::{fs::File, io::Read};
+use strucs::data_sii::SignatureType;
 use utils::aes::decrypt;
+use utils::file_type::try_read_u32;
 use utils::zlib::uncompress;
 
 fn save_to_file(filename: &str, data: Vec<u8>) -> Option<()> {
@@ -36,19 +38,37 @@ fn read_file_bin(path: &str) -> Option<Vec<u8>> {
 }
 
 fn decrypt_bin_file(file_bin: Vec<u8>) -> Option<Vec<u8>> {
-    let mut data = match decrypt(&file_bin) {
-        Some(res) => res,
+    let file_type = match try_read_u32(&file_bin) {
+        Some(file_type) => file_type,
         None => return None,
     };
 
-    match uncompress(&data.data) {
-        Some(res) => data.data = res,
-        None => return None,
-    };
+    if file_type == SignatureType::PlainText as u32 {
+        return Some(file_bin);
+    }
 
-    match decode(&data.data) {
-        Some(res) => Some(res),
-        None => None,
+    if file_type == SignatureType::Encrypted as u32 {
+        let mut data = match decrypt(&file_bin) {
+            Some(res) => res,
+            None => return None,
+        };
+
+        match uncompress(&data.data) {
+            Some(res) => data.data = res,
+            None => return None,
+        };
+
+        match decode(&data.data) {
+            Some(res) => Some(res),
+            None => None,
+        }
+    } else if file_type == SignatureType::Binary as u32 {
+        match uncompress(&file_bin) {
+            Some(res) => Some(res),
+            None => None,
+        }
+    } else {
+        None
     }
 }
 

@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
 pub enum SignatureType {
-    PlainText = 1,
-    Encrypted = 2,
-    Binary = 3,
+    PlainText = 1315531091,
+    Encrypted = 1131635539,
+    Binary = 1229542210,
+    _3nK = 21720627,
 }
 
 pub struct SIIHeader {
@@ -11,6 +12,7 @@ pub struct SIIHeader {
     pub data_size: u32,
 }
 
+#[allow(dead_code)]
 pub struct SIIData {
     pub header: SIIHeader,
     pub data: Vec<u8>,
