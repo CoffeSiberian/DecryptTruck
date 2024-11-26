@@ -12,35 +12,48 @@ const CHAR_TABLE: &'static [char] = &[
 ];
 
 // 0x01
-pub fn decode_utf8_string(bytes: &[u8], offset: &mut usize) -> String {
-    let length = decode_u32(bytes, offset) as usize;
+pub fn decode_utf8_string(bytes: &[u8], offset: &mut usize) -> Result<String, String> {
+    let length = match decode_u32(bytes, offset) {
+        Ok(res) => res as usize,
+        Err(err) => return Err(err),
+    };
     let bytes = str::from_utf8(&bytes[*offset..*offset + length]);
 
     let result = match bytes {
         Ok(res) => res.to_string(),
-        Err(_) => panic!("Error decoding utf8 string"),
+        Err(_) => return Err(format!("Error decoding utf8 string offset: {}", offset)),
     };
 
     *offset += length;
-    result
+    Ok(result)
 }
 
 // 0x02
-pub fn decode_utf8_string_array(bytes: &[u8], offset: &mut usize) -> Vec<String> {
-    let number_of_strings = decode_u32(bytes, offset);
+pub fn decode_utf8_string_array(bytes: &[u8], offset: &mut usize) -> Result<Vec<String>, String> {
+    let number_of_strings = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_strings as usize);
 
     for _ in 0..number_of_strings {
-        result.push(decode_utf8_string(bytes, offset));
+        let value = match decode_utf8_string(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
 // 0x03
-pub fn decode_u64_string(bytes: &[u8], offset: &mut usize) -> String {
+pub fn decode_u64_string(bytes: &[u8], offset: &mut usize) -> Result<String, String> {
     let mut result = String::new();
-    let mut value = decode_u64(bytes, offset);
+    let mut value = match decode_u64(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
 
     // value &= !(1 << 63);
     while value != 0 {
@@ -55,141 +68,262 @@ pub fn decode_u64_string(bytes: &[u8], offset: &mut usize) -> String {
         }
     }
 
-    result
+    Ok(result)
 }
 
 // 0x04
-pub fn decode_u64_string_array(bytes: &[u8], offset: &mut usize) -> Vec<String> {
-    let number_of_strings = decode_u32(bytes, offset);
-    let mut result = vec![String::new(); number_of_strings as usize];
+pub fn decode_u64_string_array(bytes: &[u8], offset: &mut usize) -> Result<Vec<String>, String> {
+    let number_of_strings = match decode_u32(bytes, offset) {
+        Ok(res) => res as usize,
+        Err(err) => return Err(err),
+    };
+    let mut result = vec![String::new(); number_of_strings];
 
     for i in 0..number_of_strings {
-        result[i as usize] = decode_u64_string(bytes, offset);
+        let value = match decode_u64_string(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result[i] = value;
     }
 
-    result
+    Ok(result)
 }
 
 // 0x05
-pub fn decode_single(bytes: &[u8], offset: &mut usize) -> f32 {
+pub fn decode_single(bytes: &[u8], offset: &mut usize) -> Result<f32, String> {
     let bytes = match bytes[*offset..*offset + std::mem::size_of::<f32>()].try_into() {
         Ok(res) => res,
-        Err(_) => panic!("Error decoding single"),
+        Err(_) => return Err(format!("Error decoding single offset: {}", offset)),
     };
 
     let result = f32::from_le_bytes(bytes);
     *offset += std::mem::size_of::<f32>();
 
-    result
+    Ok(result)
 }
 
 // 0x06
-pub fn decode_single_array(bytes: &[u8], offset: &mut usize) -> Vec<f32> {
-    let number_of_singles = decode_u32(bytes, offset) as usize;
+pub fn decode_single_array(bytes: &[u8], offset: &mut usize) -> Result<Vec<f32>, String> {
+    let number_of_singles = match decode_u32(bytes, offset) {
+        Ok(res) => res as usize,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_singles);
 
     for _ in 0..number_of_singles {
-        result.push(decode_single(bytes, offset));
+        let value = match decode_single(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
 // 0x07
-pub fn decode_single_vector2(bytes: &[u8], offset: &mut usize) -> SingleVector2 {
-    SingleVector2 {
-        a: decode_single(bytes, offset),
-        b: decode_single(bytes, offset),
-    }
+pub fn decode_single_vector2(bytes: &[u8], offset: &mut usize) -> Result<SingleVector2, String> {
+    let a = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let b = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+
+    Ok(SingleVector2 { a, b })
 }
 
 // 0x08
-pub fn decode_single_vector2_array(bytes: &[u8], offset: &mut usize) -> Vec<SingleVector2> {
-    let number_of_vector2s = decode_u32(bytes, offset);
+pub fn decode_single_vector2_array(
+    bytes: &[u8],
+    offset: &mut usize,
+) -> Result<Vec<SingleVector2>, String> {
+    let number_of_vector2s = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_vector2s as usize);
 
     for _ in 0..number_of_vector2s {
-        result.push(decode_single_vector2(bytes, offset));
+        let value = match decode_single_vector2(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
 // 0x09
-pub fn decode_single_vector3(bytes: &[u8], offset: &mut usize) -> SingleVector3 {
-    SingleVector3 {
-        a: decode_single(bytes, offset),
-        b: decode_single(bytes, offset),
-        c: decode_single(bytes, offset),
-    }
+pub fn decode_single_vector3(bytes: &[u8], offset: &mut usize) -> Result<SingleVector3, String> {
+    let a = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let b = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let c = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+
+    Ok(SingleVector3 { a, b, c })
 }
 
 // 0x0A
-pub fn decode_single_vector3_array(bytes: &[u8], offset: &mut usize) -> Vec<SingleVector3> {
-    let number_of_vector3s = decode_u32(bytes, offset);
+pub fn decode_single_vector3_array(
+    bytes: &[u8],
+    offset: &mut usize,
+) -> Result<Vec<SingleVector3>, String> {
+    let number_of_vector3s = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_vector3s as usize);
 
     for _ in 0..number_of_vector3s {
-        result.push(decode_single_vector3(bytes, offset));
+        let value = match decode_single_vector3(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
 // 0x11
-pub fn decode_int32_vector3(bytes: &[u8], offset: &mut usize) -> Int32Vector3i32 {
-    Int32Vector3i32 {
-        a: decode_int32(bytes, offset),
-        b: decode_int32(bytes, offset),
-        c: decode_int32(bytes, offset),
-    }
+pub fn decode_int32_vector3(bytes: &[u8], offset: &mut usize) -> Result<Int32Vector3i32, String> {
+    let a = match decode_int32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let b = match decode_int32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let c = match decode_int32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+
+    Ok(Int32Vector3i32 { a, b, c })
 }
 
 // 0x12
-pub fn decode_int32_vector3_array(bytes: &[u8], offset: &mut usize) -> Vec<Int32Vector3i32> {
-    let number_of_vector3s = decode_u32(bytes, offset);
+pub fn decode_int32_vector3_array(
+    bytes: &[u8],
+    offset: &mut usize,
+) -> Result<Vec<Int32Vector3i32>, String> {
+    let number_of_vector3s = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_vector3s as usize);
 
     for _ in 0..number_of_vector3s {
-        result.push(decode_int32_vector3(bytes, offset));
+        let value = match decode_int32_vector3(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
 // 0x1A
-pub fn decode_single_vector7_array(bytes: &[u8], offset: &mut usize) -> Vec<SingleVector7> {
-    let number_of_vector7s = decode_u32(bytes, offset);
+pub fn decode_single_vector7_array(
+    bytes: &[u8],
+    offset: &mut usize,
+) -> Result<Vec<SingleVector7>, String> {
+    let number_of_vector7s = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_vector7s as usize);
 
     for _ in 0..number_of_vector7s {
-        result.push(decode_single_vector7(bytes, offset));
+        let value = match decode_single_vector7(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
-pub fn decode_single_vector8_array(bytes: &[u8], offset: &mut usize) -> Vec<SingleVector8> {
-    let number_of_vector8s = decode_u32(bytes, offset);
+pub fn decode_single_vector8_array(
+    bytes: &[u8],
+    offset: &mut usize,
+) -> Result<Vec<SingleVector8>, String> {
+    let number_of_vector8s = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_vector8s as usize);
 
     for _ in 0..number_of_vector8s {
-        result.push(decode_single_vector8(bytes, offset));
+        let value = match decode_single_vector8(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
-pub fn decode_single_vector8(bytes: &[u8], offset: &mut usize) -> SingleVector8 {
+pub fn decode_single_vector8(bytes: &[u8], offset: &mut usize) -> Result<SingleVector8, String> {
+    let a = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let b = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let c = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let d = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let e = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let f = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let g = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let h = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+
     let mut result = SingleVector8 {
-        a: decode_single(bytes, offset),
-        b: decode_single(bytes, offset),
-        c: decode_single(bytes, offset),
-        d: decode_single(bytes, offset),
-        e: decode_single(bytes, offset),
-        f: decode_single(bytes, offset),
-        g: decode_single(bytes, offset),
-        h: decode_single(bytes, offset),
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        g,
+        h,
     };
 
     let bias = result.d as i64;
@@ -206,192 +340,285 @@ pub fn decode_single_vector8(bytes: &[u8], offset: &mut usize) -> SingleVector8 
     bits2 <<= 9;
     result.c += bits2 as f32;
 
-    result
+    Ok(result)
 }
 
 // 0x17
-pub fn decode_single_vector4(bytes: &[u8], offset: &mut usize) -> SingleVector4 {
-    SingleVector4 {
-        a: decode_single(bytes, offset),
-        b: decode_single(bytes, offset),
-        c: decode_single(bytes, offset),
-        d: decode_single(bytes, offset),
-    }
+pub fn decode_single_vector4(bytes: &[u8], offset: &mut usize) -> Result<SingleVector4, String> {
+    let a = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let b = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let c = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let d = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+
+    Ok(SingleVector4 { a, b, c, d })
 }
 
 // 0x18
-pub fn decode_single_vector4_array(bytes: &[u8], offset: &mut usize) -> Vec<SingleVector4> {
-    let number = decode_u32(bytes, offset);
+pub fn decode_single_vector4_array(
+    bytes: &[u8],
+    offset: &mut usize,
+) -> Result<Vec<SingleVector4>, String> {
+    let number = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number as usize);
 
     for _ in 0..number {
-        result.push(decode_single_vector4(bytes, offset));
+        let value = match decode_single_vector4(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
 // 0x19
-pub fn decode_single_vector7(bytes: &[u8], offset: &mut usize) -> SingleVector7 {
-    SingleVector7 {
-        a: decode_single(bytes, offset),
-        b: decode_single(bytes, offset),
-        c: decode_single(bytes, offset),
-        d: decode_single(bytes, offset),
-        e: decode_single(bytes, offset),
-        f: decode_single(bytes, offset),
-        g: decode_single(bytes, offset),
-    }
+pub fn decode_single_vector7(bytes: &[u8], offset: &mut usize) -> Result<SingleVector7, String> {
+    let a = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let b = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let c = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let d = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let e = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let f = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let g = match decode_single(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+
+    Ok(SingleVector7 {
+        a,
+        b,
+        c,
+        d,
+        e,
+        f,
+        g,
+    })
 }
 
 // 0x25
-pub fn decode_int32(bytes: &[u8], offset: &mut usize) -> i32 {
+pub fn decode_int32(bytes: &[u8], offset: &mut usize) -> Result<i32, String> {
     let bytes = match bytes[*offset..*offset + std::mem::size_of::<i32>()].try_into() {
         Ok(res) => res,
-        Err(_) => panic!("Error decoding int32"),
+        Err(_) => return Err(format!("Error decoding int32 offset: {}", offset)),
     };
 
     let result = i32::from_le_bytes(bytes);
     *offset += std::mem::size_of::<i32>();
 
-    result
+    Ok(result)
 }
 
 // 0x26
-pub fn decode_i32_array(bytes: &[u8], offset: &mut usize) -> Vec<i32> {
-    let number_of_ints = decode_u32(bytes, offset);
+pub fn decode_i32_array(bytes: &[u8], offset: &mut usize) -> Result<Vec<i32>, String> {
+    let number_of_ints = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_ints as usize);
 
     for _ in 0..number_of_ints {
-        result.push(decode_int32(bytes, offset));
+        let value = match decode_int32(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
 // 0x2B
-pub fn decode_u16(bytes: &[u8], offset: &mut usize) -> u16 {
+pub fn decode_u16(bytes: &[u8], offset: &mut usize) -> Result<u16, String> {
     let bytes = match bytes[*offset..*offset + std::mem::size_of::<u16>()].try_into() {
         Ok(res) => res,
-        Err(_) => panic!("Error decoding u16"),
+        Err(_) => return Err(format!("Error decoding u16 offset: {}", offset)),
     };
 
     let result = u16::from_le_bytes(bytes);
     *offset += std::mem::size_of::<u16>();
 
-    result
+    Ok(result)
 }
 
 // 0x2C
-pub fn decode_u16_array(bytes: &[u8], offset: &mut usize) -> Vec<u16> {
-    let number_of_ints = decode_u32(bytes, offset);
+pub fn decode_u16_array(bytes: &[u8], offset: &mut usize) -> Result<Vec<u16>, String> {
+    let number_of_ints = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_ints as usize);
 
     for _ in 0..number_of_ints {
-        result.push(decode_u16(bytes, offset));
+        let value = match decode_u16(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
 // 0x27 and 0x2F
-pub fn decode_u32(bytes: &[u8], offset: &mut usize) -> u32 {
+pub fn decode_u32(bytes: &[u8], offset: &mut usize) -> Result<u32, String> {
     let bytes = match bytes[*offset..*offset + 4].try_into() {
         Ok(res) => res,
-        Err(_) => panic!("Error decoding u32"),
+        Err(_) => return Err(format!("Error decoding u32 offset: {}", offset)),
     };
 
     let result = u32::from_le_bytes(bytes);
     *offset += std::mem::size_of::<u32>();
 
-    result
+    Ok(result)
 }
 
 // 0x28
-pub fn decode_u32_array(bytes: &[u8], offset: &mut usize) -> Vec<u32> {
-    let number_of_ints = decode_u32(bytes, offset);
+pub fn decode_u32_array(bytes: &[u8], offset: &mut usize) -> Result<Vec<u32>, String> {
+    let number_of_ints = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_ints as usize);
 
     for _ in 0..number_of_ints {
-        result.push(decode_u32(bytes, offset));
+        let value = match decode_u32(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
 // 0x29
-pub fn decode_int16(bytes: &[u8], offset: &mut usize) -> i16 {
+pub fn decode_int16(bytes: &[u8], offset: &mut usize) -> Result<i16, String> {
     let bytes = match bytes[*offset..*offset + std::mem::size_of::<i16>()].try_into() {
         Ok(res) => res,
-        Err(_) => panic!("Error decoding int16"),
+        Err(_) => return Err(format!("Error decoding int16 offset: {}", offset)),
     };
 
     let result = i16::from_le_bytes(bytes);
     *offset += std::mem::size_of::<i16>();
 
-    result
+    Ok(result)
 }
 
 // 0x2A
-pub fn decode_int16_array(bytes: &[u8], offset: &mut usize) -> Vec<i16> {
-    let number_of_ints = decode_u32(bytes, offset);
+pub fn decode_int16_array(bytes: &[u8], offset: &mut usize) -> Result<Vec<i16>, String> {
+    let number_of_ints = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_ints as usize);
 
     for _ in 0..number_of_ints {
-        result.push(decode_int16(bytes, offset));
+        let value = match decode_int16(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
 // 0x31
-pub fn decode_int64(bytes: &[u8], offset: &mut usize) -> i64 {
+pub fn decode_int64(bytes: &[u8], offset: &mut usize) -> Result<i64, String> {
     let bytes = match bytes[*offset..*offset + std::mem::size_of::<i64>()].try_into() {
         Ok(res) => res,
-        Err(_) => panic!("Error decoding int64"),
+        Err(_) => return Err(format!("Error decoding int64 offset: {}", offset)),
     };
 
     let result = i64::from_le_bytes(bytes);
     *offset += std::mem::size_of::<i64>();
 
-    result
+    Ok(result)
 }
 
 // 0x32
-pub fn decode_int64_array(bytes: &[u8], offset: &mut usize) -> Vec<i64> {
-    let number_of_ints = decode_u32(bytes, offset);
+pub fn decode_int64_array(bytes: &[u8], offset: &mut usize) -> Result<Vec<i64>, String> {
+    let number_of_ints = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_ints as usize);
 
     for _ in 0..number_of_ints {
-        result.push(decode_int64(bytes, offset));
+        let value = match decode_int64(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
 // 0x33
-pub fn decode_u64(bytes: &[u8], offset: &mut usize) -> u64 {
+pub fn decode_u64(bytes: &[u8], offset: &mut usize) -> Result<u64, String> {
     let bytes = match bytes[*offset..*offset + 8].try_into() {
         Ok(res) => res,
-        Err(_) => panic!("Error decoding u64"),
+        Err(_) => return Err(format!("Error decoding u64 offset: {}", offset)),
     };
 
     let result = u64::from_le_bytes(bytes);
     *offset += std::mem::size_of::<u64>();
 
-    result
+    Ok(result)
 }
 
 // 0x34
-pub fn decode_u64_array(bytes: &[u8], offset: &mut usize) -> Vec<u64> {
-    let number_of_ints = decode_u32(bytes, offset);
+pub fn decode_u64_array(bytes: &[u8], offset: &mut usize) -> Result<Vec<u64>, String> {
+    let number_of_ints = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_ints as usize);
 
     for _ in 0..number_of_ints {
-        result.push(decode_u64(bytes, offset));
+        let value = match decode_u64(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
 // 0x35
@@ -402,47 +629,66 @@ pub fn decode_bool(bytes: &[u8], offset: &mut usize) -> bool {
 }
 
 // 0x36
-pub fn decode_bool_array(bytes: &[u8], offset: &mut usize) -> Vec<bool> {
-    let number_of_bools = decode_u32(bytes, offset);
-    let mut result = vec![false; number_of_bools as usize];
+pub fn decode_bool_array(bytes: &[u8], offset: &mut usize) -> Result<Vec<bool>, String> {
+    let number_of_bools = match decode_u32(bytes, offset) {
+        Ok(res) => res as usize,
+        Err(err) => return Err(err),
+    };
+    let mut result = vec![false; number_of_bools];
 
     for i in 0..number_of_bools {
-        result[i as usize] = decode_bool(bytes, offset);
+        result[i] = decode_bool(bytes, offset);
     }
 
-    result
+    Ok(result)
 }
 
 //0x37
-pub fn decode_ordinal_string_list(bytes: &[u8], offset: &mut usize) -> HashMap<u32, String> {
-    let length = decode_u32(bytes, offset);
+pub fn decode_ordinal_string_list(
+    bytes: &[u8],
+    offset: &mut usize,
+) -> Result<HashMap<u32, String>, String> {
+    let length = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut values = HashMap::new();
 
     for _ in 0..length {
-        let ordinal = decode_u32(bytes, offset);
-        let string_value = decode_utf8_string(bytes, offset);
+        let ordinal = match decode_u32(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        let string_value = match decode_utf8_string(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+
         values.insert(ordinal, string_value);
     }
 
-    values
+    Ok(values)
 }
 
 pub fn get_ordinal_string_from_values(
     values: &std::collections::HashMap<u32, String>,
     bytes: &[u8],
     offset: &mut usize,
-) -> String {
-    let index = decode_u32(bytes, offset);
+) -> Result<String, String> {
+    let index = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
 
     if let Some(value) = values.get(&index) {
-        value.clone()
+        Ok(value.clone())
     } else {
-        String::new()
+        Ok(String::new())
     }
 }
 
 // 0x39, 0x3B, 0x3D
-pub fn decode_id(bytes: &[u8], offset: &mut usize) -> IDComplexType {
+pub fn decode_id(bytes: &[u8], offset: &mut usize) -> Result<IDComplexType, String> {
     let mut result = IDComplexType::new();
 
     result.value = String::new();
@@ -450,7 +696,10 @@ pub fn decode_id(bytes: &[u8], offset: &mut usize) -> IDComplexType {
     *offset += 1;
 
     if result.part_count == 0xFF {
-        result.address = decode_u64(bytes, offset);
+        result.address = match decode_u64(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
 
         let data = result.address.to_le_bytes();
         let mut parts = vec![String::new(); data.len() / 2];
@@ -491,7 +740,10 @@ pub fn decode_id(bytes: &[u8], offset: &mut usize) -> IDComplexType {
         result.value = format!("_nameless.{}", &result.value[..result.value.len() - 1]);
     } else {
         for i in 0..result.part_count {
-            let s = decode_u64_string(bytes, offset);
+            let s = match decode_u64_string(bytes, offset) {
+                Ok(res) => res,
+                Err(err) => return Err(err),
+            };
 
             if i > 0 {
                 result.value.push('.');
@@ -505,25 +757,38 @@ pub fn decode_id(bytes: &[u8], offset: &mut usize) -> IDComplexType {
         }
     }
 
-    result
+    Ok(result)
 }
 
 // 0x3A, 0x3C, 0x3E
-pub fn decode_id_array(bytes: &[u8], offset: &mut usize) -> Vec<IDComplexType> {
-    let number_of_ids = decode_u32(bytes, offset);
+pub fn decode_id_array(bytes: &[u8], offset: &mut usize) -> Result<Vec<IDComplexType>, String> {
+    let number_of_ids = match decode_u32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
     let mut result = Vec::with_capacity(number_of_ids as usize);
 
     for _ in 0..number_of_ids {
-        result.push(decode_id(bytes, offset));
+        let value = match decode_id(bytes, offset) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+        result.push(value);
     }
 
-    result
+    Ok(result)
 }
 
 // 0x41
-pub fn decode_int32_vector2(bytes: &[u8], offset: &mut usize) -> Int32Vector2 {
-    Int32Vector2 {
-        a: decode_int32(bytes, offset),
-        b: decode_int32(bytes, offset),
-    }
+pub fn decode_int32_vector2(bytes: &[u8], offset: &mut usize) -> Result<Int32Vector2, String> {
+    let a = match decode_int32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+    let b = match decode_int32(bytes, offset) {
+        Ok(res) => res,
+        Err(err) => return Err(err),
+    };
+
+    Ok(Int32Vector2 { a, b })
 }

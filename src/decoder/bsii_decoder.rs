@@ -13,7 +13,7 @@ fn check_version(file_data: &BSIIData) -> bool {
         && file_data.header.version != BsiiSupportedVersions::Version3 as u32
 }
 
-fn read_data_block(bytes: &[u8], stream_pos: &mut usize) -> BsiiDataSegment {
+fn read_data_block(bytes: &[u8], stream_pos: &mut usize) -> Result<BsiiDataSegment, String> {
     let mut result = BsiiDataSegment {
         name: String::new(),
         segment_type: 0,
@@ -21,27 +21,42 @@ fn read_data_block(bytes: &[u8], stream_pos: &mut usize) -> BsiiDataSegment {
         ordinal_string_hash: None,
     };
 
-    result.segment_type = decode_utils::decode_u32(bytes, stream_pos);
+    result.segment_type = match decode_utils::decode_u32(bytes, stream_pos) {
+        Ok(res) => res,
+        Err(e) => return Err(e),
+    };
     if result.segment_type != 0 {
-        result.name = decode_utils::decode_utf8_string(bytes, stream_pos);
+        result.name = match decode_utils::decode_utf8_string(bytes, stream_pos) {
+            Ok(res) => res,
+            Err(e) => return Err(e),
+        };
     }
 
     // IF THE TYPE IS 55
     if result.segment_type == DataTypeIdFormat::OrdinalString as u32 {
         // READ THE ORDINAL STRING LIST NOW
-        result.ordinal_string_hash =
-            Some(decode_utils::decode_ordinal_string_list(bytes, stream_pos));
+        let ordinal_string = match decode_utils::decode_ordinal_string_list(bytes, stream_pos) {
+            Ok(res) => res,
+            Err(e) => return Err(e),
+        };
+        result.ordinal_string_hash = Some(ordinal_string);
     }
 
-    result
+    Ok(result)
 }
 
-pub fn decode(file_bin: &[u8]) -> Option<Vec<u8>> {
+pub fn decode(file_bin: &[u8]) -> Result<Vec<u8>, String> {
     let mut stream_pos = 0;
 
     let mut file_data = BSIIData::new();
-    file_data.header.signature = decode_utils::decode_u32(&file_bin, &mut stream_pos);
-    file_data.header.version = decode_utils::decode_u32(&file_bin, &mut stream_pos);
+    file_data.header.signature = match decode_utils::decode_u32(&file_bin, &mut stream_pos) {
+        Ok(res) => res,
+        Err(e) => return Err(e),
+    };
+    file_data.header.version = match decode_utils::decode_u32(&file_bin, &mut stream_pos) {
+        Ok(res) => res,
+        Err(e) => return Err(e),
+    };
 
     let mut current_block: BsiiStructureBlock;
     let mut block_type: u32;
@@ -50,11 +65,17 @@ pub fn decode(file_bin: &[u8]) -> Option<Vec<u8>> {
     let mut stream_pos: usize = 0;
     let mut file_data = BSIIData::new();
 
-    file_data.header.signature = decode_utils::decode_u32(&file_bin, &mut stream_pos);
-    file_data.header.version = decode_utils::decode_u32(&file_bin, &mut stream_pos);
+    file_data.header.signature = match decode_utils::decode_u32(&file_bin, &mut stream_pos) {
+        Ok(res) => res,
+        Err(e) => return Err(e),
+    };
+    file_data.header.version = match decode_utils::decode_u32(&file_bin, &mut stream_pos) {
+        Ok(res) => res,
+        Err(e) => return Err(e),
+    };
 
     if check_version(&file_data) {
-        return None;
+        return Err("Unsupported version".to_string());
     }
 
     loop {
@@ -62,7 +83,10 @@ pub fn decode(file_bin: &[u8]) -> Option<Vec<u8>> {
             break;
         }
 
-        block_type = decode_utils::decode_u32(&file_bin, &mut stream_pos);
+        block_type = match decode_utils::decode_u32(&file_bin, &mut stream_pos) {
+            Ok(res) => res,
+            Err(e) => return Err(e),
+        };
 
         if block_type == 0 {
             current_block = BsiiStructureBlock::new();
@@ -74,13 +98,24 @@ pub fn decode(file_bin: &[u8]) -> Option<Vec<u8>> {
                 continue;
             }
 
-            current_block.structure_id = decode_utils::decode_u32(&file_bin, &mut stream_pos);
-            current_block.name = decode_utils::decode_utf8_string(&file_bin, &mut stream_pos);
+            current_block.structure_id = match decode_utils::decode_u32(&file_bin, &mut stream_pos)
+            {
+                Ok(res) => res,
+                Err(e) => return Err(e),
+            };
+            current_block.name = match decode_utils::decode_utf8_string(&file_bin, &mut stream_pos)
+            {
+                Ok(res) => res,
+                Err(e) => return Err(e),
+            };
 
             let mut segment_type = 999;
 
             while segment_type != 0 {
-                let segment_data = read_data_block(&file_bin, &mut stream_pos);
+                let segment_data = match read_data_block(&file_bin, &mut stream_pos) {
+                    Ok(res) => res,
+                    Err(e) => return Err(e),
+                };
                 segment_type = segment_data.segment_type;
 
                 if segment_data.segment_type == DataTypeIdFormat::OrdinalString as u32
@@ -88,7 +123,7 @@ pub fn decode(file_bin: &[u8]) -> Option<Vec<u8>> {
                 {
                     let string_hash = match segment_data.ordinal_string_hash.clone() {
                         Some(res) => res,
-                        None => return None,
+                        None => return Err("Ordinal string hash is empty".to_string()),
                     };
 
                     ordinal_lists.insert(current_block.structure_id, string_hash);
@@ -111,7 +146,7 @@ pub fn decode(file_bin: &[u8]) -> Option<Vec<u8>> {
                 .find(|block| block.structure_id == block_type)
             {
                 Some(block) => block,
-                None => return None,
+                None => return Err("Block not found".to_string()),
             };
 
             let mut block_data = BsiiStructureBlock::new();
@@ -144,20 +179,20 @@ pub fn decode(file_bin: &[u8]) -> Option<Vec<u8>> {
                 list = existing_list.clone();
             }
 
-            load_data_block_local(
+            match load_data_block_local(
                 &file_bin,
                 &mut stream_pos,
                 &mut block_data,
                 file_data.header.version,
                 &mut list,
-            );
+            ) {
+                Ok(_) => (),
+                Err(e) => return Err(e),
+            }
 
             file_data.decoded_blocks.push(block_data);
         }
     }
 
-    match bsii_serializer::serializer(file_data) {
-        Some(res) => Some(res),
-        None => return None,
-    }
+    Ok(bsii_serializer::serializer(file_data))
 }

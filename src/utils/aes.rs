@@ -11,7 +11,7 @@ pub const SII_KEY: [u8; 32] = [
     0xc2, 0x73, 0x71, 0x56, 0x3f, 0xbf, 0x1f, 0x3c, 0x9e, 0xdf, 0x6b, 0x11, 0x82, 0x5a, 0x5d, 0x0a,
 ];
 
-pub fn decrypt(encrypted: &Vec<u8>) -> Option<SIIData> {
+pub fn decrypt(encrypted: &Vec<u8>) -> Result<SIIData, String> {
     let mut header = SIIHeader::new();
 
     // let mut hmac: Vec<u8> = Vec::new();
@@ -23,7 +23,7 @@ pub fn decrypt(encrypted: &Vec<u8>) -> Option<SIIData> {
         let bytes = match encrypted[stream_pos..stream_pos + std::mem::size_of::<u32>()].try_into()
         {
             Ok(res) => res,
-            Err(_) => return None,
+            Err(_) => return Err("Invalid file size".to_string()),
         };
 
         header.signature = u32::from_le_bytes(bytes);
@@ -44,7 +44,7 @@ pub fn decrypt(encrypted: &Vec<u8>) -> Option<SIIData> {
         let bytes = match encrypted[stream_pos..stream_pos + std::mem::size_of::<u32>()].try_into()
         {
             Ok(res) => res,
-            Err(_) => return None,
+            Err(_) => return Err("Invalid file size".to_string()),
         };
 
         header.data_size = u32::from_le_bytes(bytes);
@@ -56,17 +56,17 @@ pub fn decrypt(encrypted: &Vec<u8>) -> Option<SIIData> {
     // Datos cifrados
     let cipher = match Aes256CbcDec::new_from_slices(&SII_KEY, &iv) {
         Ok(res) => res,
-        Err(_) => return None,
+        Err(_) => return Err("Invalid key or iv".to_string()),
     };
 
     let mut final_encrypted_mut = final_encrypted;
 
     let decrypted_data = match cipher.decrypt_padded_mut::<Pkcs7>(&mut final_encrypted_mut) {
         Ok(decrypted_data) => decrypted_data,
-        Err(_) => return None,
+        Err(_) => return Err("Error decrypting data".to_string()),
     };
 
-    Some(SIIData {
+    Ok(SIIData {
         data: decrypted_data.to_vec(),
         header,
     })

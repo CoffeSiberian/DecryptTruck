@@ -287,7 +287,7 @@ fn is_limited_alphabet(value: &str) -> bool {
     true
 }
 
-pub fn serializer(data: BSIIData) -> Option<Vec<u8>> {
+pub fn serializer(data: BSIIData) -> Vec<u8> {
     let mut str_build: String = String::new();
 
     str_build.push_str("SiiNunit\n");
@@ -306,5 +306,5 @@ pub fn serializer(data: BSIIData) -> Option<Vec<u8>> {
     }
     str_build.push_str("}");
 
-    Some(str_build.into_bytes())
+    str_build.into_bytes()
 }
