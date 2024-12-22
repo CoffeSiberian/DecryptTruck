@@ -238,7 +238,7 @@ fn serialize_utf8_string_vec(data: &BsiiDataSegment) -> String {
     text.push_str(&format!("{}{}: {}\n", IDENT, data.name, value.len()));
 
     for (i, val) in value.iter().enumerate() {
-        if val.parse::<i32>().is_ok() {
+        if val.parse::<u32>().is_ok() {
             text.push_str(&format!("{}{}[{}]: {}\n", IDENT, data.name, i, val));
         } else {
             if val.is_empty() {

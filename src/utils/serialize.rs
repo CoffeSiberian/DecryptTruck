@@ -96,7 +96,15 @@ pub fn u16_vec_to_string_vec(vec: Vec<u16>) -> Vec<String> {
 }
 
 pub fn u32_vec_to_string_vec(vec: Vec<u32>) -> Vec<String> {
-    vec.into_iter().map(|u| u.to_string()).collect()
+    vec.into_iter()
+        .map(|u| {
+            if u != 4294967295 {
+                return u.to_string();
+            }
+
+            "nil".to_string()
+        })
+        .collect()
 }
 
 pub fn u64_vec_to_string_vec(vec: Vec<u64>) -> Vec<String> {
