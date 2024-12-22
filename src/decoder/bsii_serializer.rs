@@ -222,10 +222,22 @@ fn serialize_single_value(data: &BsiiDataSegment) -> String {
 fn serialize_single_value_string(data: &BsiiDataSegment) -> String {
     let value = &data.value[0];
 
-    let value_compare = if value.is_empty() {
-        "\"\"".to_string()
-    } else {
-        value.to_string()
+    let value_compare = match value {
+        /*
+        Support for external decryptors (more data types possible)
+        */
+        v if data.name == "part_type" && v == "vehicle" => "unknown".to_string(),
+        v if data.name == "type" && v == "parking" => "spot".to_string(),
+        v if data.name == "setup" && v == "low_beam" => "candela_hue_saturation".to_string(),
+        v if data.name == "setup" && v == "parking" => "lumen_hue_saturation".to_string(),
+        v if data.name == "dir_type" && v == "parking" => "wide".to_string(),
+        v if data.name == "dir_type" && v == "low_beam" => "narrow".to_string(),
+        v if data.name == "cut_direction" && v.is_empty() => "forward".to_string(),
+        /*
+        Standard types
+        */
+        v if v.is_empty() => "\"\"".to_string(),
+        _ => value.to_string(),
     };
 
     format!("{}{}: {}\n", IDENT, data.name, value_compare)
