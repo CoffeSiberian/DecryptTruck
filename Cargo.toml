@@ -1,6 +1,6 @@
 [package]
 name = "decrypt_truck"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 description = "Decrypt your saves in the ATS and ETS 2 games with this quick little utility rewritten in Rust"
 license = "MIT"
