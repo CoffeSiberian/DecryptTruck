@@ -4,38 +4,13 @@ mod utils;
 
 use decoder::bsii_decoder::decode;
 use std::env;
-use std::io::Write;
 use std::time::Instant;
-use std::{fs::File, io::Read};
+use utils::file_operations::{read_file_bin, save_to_file};
+
 use strucs::data_sii::SignatureType;
 use utils::aes::decrypt;
 use utils::file_type::try_read_u32;
 use utils::zlib::uncompress;
-
-fn save_to_file(filename: &str, data: Vec<u8>) -> Option<()> {
-    let mut file = match File::create(filename) {
-        Ok(res) => res,
-        Err(_) => return None,
-    };
-
-    match file.write_all(&data) {
-        Ok(_) => Some(()),
-        Err(_) => None,
-    }
-}
-
-fn read_file_bin(path: &str) -> Option<Vec<u8>> {
-    let mut file = match File::open(path) {
-        Ok(res) => res,
-        Err(_) => return None,
-    };
-
-    let mut buffer = Vec::new();
-    match file.read_to_end(&mut buffer) {
-        Ok(_) => Some(buffer),
-        Err(_) => None,
-    }
-}
 
 fn decrypt_bin_file(file_bin: Vec<u8>) -> Result<Vec<u8>, String> {
     let file_type = match try_read_u32(&file_bin) {
