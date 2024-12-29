@@ -46,18 +46,6 @@ fn read_data_block(bytes: &[u8], stream_pos: &mut usize) -> Result<BsiiDataSegme
 }
 
 pub fn decode(file_bin: &[u8]) -> Result<Vec<u8>, String> {
-    let mut stream_pos = 0;
-
-    let mut file_data = BSIIData::new();
-    file_data.header.signature = match decode_utils::decode_u32(&file_bin, &mut stream_pos) {
-        Ok(res) => res,
-        Err(e) => return Err(e),
-    };
-    file_data.header.version = match decode_utils::decode_u32(&file_bin, &mut stream_pos) {
-        Ok(res) => res,
-        Err(e) => return Err(e),
-    };
-
     let mut current_block: BsiiStructureBlock;
     let mut block_type: u32;
     let mut ordinal_lists: HashMap<u32, HashMap<u32, String>> = HashMap::new();
