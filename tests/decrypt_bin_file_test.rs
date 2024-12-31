@@ -1,4 +1,18 @@
-use decrypt_truck::{decrypt_bin_file, read_file_bin};
+use decrypt_truck::decrypt_bin_file;
+use std::{fs::File, io::Read};
+
+pub fn read_file_bin(path: &str) -> Option<Vec<u8>> {
+    let mut file = match File::open(path) {
+        Ok(res) => res,
+        Err(_) => return None,
+    };
+
+    let mut buffer = Vec::new();
+    match file.read_to_end(&mut buffer) {
+        Ok(_) => Some(buffer),
+        Err(_) => None,
+    }
+}
 
 #[test]
 fn test_decrypt_bin_encrypted_file() {

@@ -9,8 +9,6 @@ use utils::aes::decrypt;
 use utils::file_type::try_read_u32;
 use utils::zlib::uncompress;
 
-pub use utils::file_operations::{read_file_bin, save_to_file};
-
 pub fn decrypt_bin_file(file_bin: &Vec<u8>) -> Result<Vec<u8>, String> {
     let file_type = match try_read_u32(&file_bin) {
         Ok(res) => res,
