@@ -11,14 +11,14 @@ use utils::zlib::uncompress;
 
 pub use utils::file_operations::{read_file_bin, save_to_file};
 
-pub fn decrypt_bin_file(file_bin: Vec<u8>) -> Result<Vec<u8>, String> {
+pub fn decrypt_bin_file(file_bin: &Vec<u8>) -> Result<Vec<u8>, String> {
     let file_type = match try_read_u32(&file_bin) {
         Ok(res) => res,
         Err(e) => return Err(e),
     };
 
     if file_type == SignatureType::PlainText as u32 {
-        return Ok(file_bin);
+        return Ok(file_bin.clone());
     }
 
     if file_type == SignatureType::Encrypted as u32 {

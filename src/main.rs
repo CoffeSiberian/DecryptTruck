@@ -27,7 +27,7 @@ fn main() {
         }
     };
 
-    match decrypt_bin_file(bin_file) {
+    match decrypt_bin_file(&bin_file) {
         Ok(res) => {
             save_to_file(&args_paths.1, res);
         }
