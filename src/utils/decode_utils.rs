@@ -63,7 +63,7 @@ pub fn decode_u64_string(bytes: &[u8], offset: &mut usize) -> Result<String, Str
         }
         char_idx -= 1;
         value /= 38;
-        if char_idx >= 0 && char_idx < 38 {
+        if (0..38).contains(&char_idx) {
             result.push(CHAR_TABLE[char_idx as usize]);
         }
     }

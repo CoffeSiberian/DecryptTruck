@@ -11,7 +11,7 @@ pub const SII_KEY: [u8; 32] = [
     0xc2, 0x73, 0x71, 0x56, 0x3f, 0xbf, 0x1f, 0x3c, 0x9e, 0xdf, 0x6b, 0x11, 0x82, 0x5a, 0x5d, 0x0a,
 ];
 
-pub fn decrypt(encrypted: &Vec<u8>) -> Result<SIIData, String> {
+pub fn decrypt(encrypted: &[u8]) -> Result<SIIData, String> {
     let mut header = SIIHeader::new();
 
     // let mut hmac: Vec<u8> = Vec::new();

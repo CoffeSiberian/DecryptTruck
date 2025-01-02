@@ -10,7 +10,7 @@ use utils::file_type::try_read_u32;
 use utils::zlib::uncompress;
 
 pub fn decrypt_bin_file(file_bin: &Vec<u8>) -> Result<Vec<u8>, String> {
-    let file_type = match try_read_u32(&file_bin) {
+    let file_type = match try_read_u32(file_bin) {
         Ok(res) => res,
         Err(e) => return Err(e),
     };
@@ -20,7 +20,7 @@ pub fn decrypt_bin_file(file_bin: &Vec<u8>) -> Result<Vec<u8>, String> {
     }
 
     if file_type == SignatureType::Encrypted as u32 {
-        let mut data = match decrypt(&file_bin) {
+        let mut data = match decrypt(file_bin) {
             Ok(res) => res,
             Err(_) => return Err("Error decrypting data".to_string()),
         };
@@ -39,15 +39,9 @@ pub fn decrypt_bin_file(file_bin: &Vec<u8>) -> Result<Vec<u8>, String> {
             return Ok(data.data);
         }
 
-        match decode(&data.data) {
-            Ok(res) => Ok(res),
-            Err(e) => Err(e),
-        }
+        decode(&data.data)
     } else if file_type == SignatureType::Binary as u32 {
-        match decode(&file_bin) {
-            Ok(res) => Ok(res),
-            Err(e) => Err(e),
-        }
+        decode(file_bin)
     } else {
         Err("Invalid file type".to_string())
     }
