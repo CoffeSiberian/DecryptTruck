@@ -233,5 +233,5 @@ pub fn decode(file_bin: &[u8]) -> Result<Vec<u8>, String> {
         }
     }
 
-    Ok(bsii_serializer::serializer(file_data))
+    Ok(bsii_serializer::serializer(&file_data))
 }

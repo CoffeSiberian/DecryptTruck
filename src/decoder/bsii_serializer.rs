@@ -1,5 +1,6 @@
 use crate::strucs::data_sii::{BSIIData, BsiiDataSegment, BsiiStructureDecodedBlock};
 use crate::strucs::sii_types::DataTypeIdFormat;
+use rayon::prelude::*;
 
 static IDENT: &str = " ";
 const LIMITED_ALPHABET: [char; 63] = [
@@ -299,24 +300,36 @@ fn is_limited_alphabet(value: &str) -> bool {
     true
 }
 
-pub fn serializer(data: BSIIData) -> Vec<u8> {
-    let mut str_build: String = String::new();
+pub fn serializer(data: &BSIIData) -> Vec<u8> {
+    let mut str_build = String::new();
+    str_build.push_str("SiiNunit\n{\n");
 
-    str_build.push_str("SiiNunit\n");
-    str_build.push_str("{\n");
+    let mut partial_results: Vec<(u32, String)> = data
+        .decoded_blocks
+        .par_iter()
+        .filter_map(|block| {
+            if block.name.is_empty() || block.id.value.is_empty() {
+                return None;
+            }
 
-    for block in data.decoded_blocks {
-        if block.name.is_empty() || block.id.value.is_empty() {
-            continue;
-        }
+            Some((
+                block.order_pos,
+                format!(
+                    "{} : {} {{\n{}}}\n\n",
+                    block.name,
+                    block.id.value,
+                    segment_serialize(block, data.header.version)
+                ),
+            ))
+        })
+        .collect();
 
-        let res_string = segment_serialize(&block, data.header.version);
+    partial_results.sort_by_key(|(pos, _)| *pos);
 
-        str_build.push_str(format!("{} : {} {{\n", block.name, block.id.value).as_str());
-        str_build.push_str(&res_string);
-        str_build.push_str("}\n\n");
+    for (_, value) in partial_results {
+        str_build.push_str(&value);
     }
-    str_build.push_str("}");
 
+    str_build.push('}');
     str_build.into_bytes()
 }
