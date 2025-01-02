@@ -25,7 +25,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::bool_vec_to_string_vec(res);
+                segment.segments[i].value = serialize::bool_vec_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfEncodedString as i32 => {
@@ -43,7 +43,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::id_complex_to_string_vec(res);
+                segment.segments[i].value = serialize::id_complex_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfIdC as i32 => {
@@ -52,7 +52,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::id_complex_to_string_vec(res);
+                segment.segments[i].value = serialize::id_complex_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfIdE as i32 => {
@@ -61,7 +61,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::id_complex_to_string_vec(res);
+                segment.segments[i].value = serialize::id_complex_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfInt32 as i32 => {
@@ -70,7 +70,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::i32_vec_to_string_vec(res);
+                segment.segments[i].value = serialize::i32_vec_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfSingle as i32 => {
@@ -79,7 +79,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::f32_vec_to_string_vec(res);
+                segment.segments[i].value = serialize::f32_vec_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfUInt16 as i32 => {
@@ -88,7 +88,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::u16_vec_to_string_vec(res);
+                segment.segments[i].value = serialize::u16_vec_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfUInt32 as i32 => {
@@ -97,7 +97,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::u32_vec_to_string_vec(res);
+                segment.segments[i].value = serialize::u32_vec_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfUInt64 as i32 => {
@@ -106,7 +106,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::u64_vec_to_string_vec(res);
+                segment.segments[i].value = serialize::u64_vec_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfUTF8String as i32 => {
@@ -124,7 +124,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::i32_vec3_to_string_vec(res);
+                segment.segments[i].value = serialize::i32_vec3_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfVectorOf3Single as i32 => {
@@ -133,7 +133,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::single_vector_3_vec_to_string_vec(res);
+                segment.segments[i].value = serialize::single_vector_3_vec_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfVectorOf4Single as i32 => {
@@ -142,7 +142,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::single_vector_4_vec_to_string_vec(res);
+                segment.segments[i].value = serialize::single_vector_4_vec_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfVectorOf8Single as i32 => {
@@ -151,13 +151,13 @@ pub fn load_data_block_local(
                         Ok(res) => res,
                         Err(e) => return Err(e),
                     };
-                    segment.segments[i].value = serialize::single_vector_7_vec_to_string_vec(res);
+                    segment.segments[i].value = serialize::single_vector_7_vec_to_string_vec(&res);
                 } else {
                     let res = match decode_utils::decode_single_vector8_array(bytes, stream_pos) {
                         Ok(res) => res,
                         Err(e) => return Err(e),
                     };
-                    segment.segments[i].value = serialize::single_vector_8_vec_to_string_vec(res);
+                    segment.segments[i].value = serialize::single_vector_8_vec_to_string_vec(&res);
                 }
 
                 continue;
@@ -293,7 +293,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = vec![serialize::single_vector_2_string(res)];
+                segment.segments[i].value = vec![serialize::single_vector_2_string(&res)];
                 continue;
             }
             x if x == DataTypeIdFormat::VectorOf3Int32 as i32 => {
@@ -302,7 +302,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = vec![serialize::vec3_u32_to_string(res)];
+                segment.segments[i].value = vec![serialize::vec3_u32_to_string(&res)];
                 continue;
             }
             x if x == DataTypeIdFormat::VectorOf3Single as i32 => {
@@ -311,7 +311,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = vec![serialize::single_vector_3_to_string(res)];
+                segment.segments[i].value = vec![serialize::single_vector_3_to_string(&res)];
                 continue;
             }
             x if x == DataTypeIdFormat::VectorOf4Single as i32 => {
@@ -320,7 +320,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = vec![serialize::single_vector_4_to_string(res)];
+                segment.segments[i].value = vec![serialize::single_vector_4_to_string(&res)];
                 continue;
             }
             x if x == DataTypeIdFormat::VectorOf8Single as i32 => {
@@ -330,14 +330,14 @@ pub fn load_data_block_local(
                         Err(e) => return Err(e),
                     };
 
-                    segment.segments[i].value = vec![serialize::single_vector_7_to_string(res)];
+                    segment.segments[i].value = vec![serialize::single_vector_7_to_string(&res)];
                 } else {
                     let res = match decode_utils::decode_single_vector8(bytes, stream_pos) {
                         Ok(res) => res,
                         Err(e) => return Err(e),
                     };
 
-                    segment.segments[i].value = vec![serialize::single_vector_8_to_string(res)];
+                    segment.segments[i].value = vec![serialize::single_vector_8_to_string(&res)];
                 }
 
                 continue;
@@ -348,7 +348,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::i64_vec_to_string_vec(res);
+                segment.segments[i].value = serialize::i64_vec_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfInt16 as i32 => {
@@ -357,7 +357,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::i16_vec_to_string_vec(res);
+                segment.segments[i].value = serialize::i16_vec_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::Int16 as i32 => {
@@ -375,7 +375,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = serialize::single_vector_2_vec_to_string_vec(res);
+                segment.segments[i].value = serialize::single_vector_2_vec_to_string_vec(&res);
                 continue;
             }
             x if x == DataTypeIdFormat::ArrayOfVectorOf2Int32 as i32 => {
@@ -384,7 +384,7 @@ pub fn load_data_block_local(
                     Err(e) => return Err(e),
                 };
 
-                segment.segments[i].value = vec![serialize::vec2_u32_to_string(res)];
+                segment.segments[i].value = vec![serialize::vec2_u32_to_string(&res)];
                 continue;
             }
             0 => {

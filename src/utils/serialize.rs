@@ -3,20 +3,24 @@ use crate::strucs::float_vector::{
     Int32Vector2, Int32Vector3i32, SingleVector2, SingleVector3, SingleVector4, SingleVector7,
     SingleVector8,
 };
+use itoa;
 
-pub fn bool_vec_to_string_vec(vec: Vec<bool>) -> Vec<String> {
+pub fn bool_vec_to_string_vec(vec: &Vec<bool>) -> Vec<String> {
     vec.into_iter().map(|b| b.to_string()).collect()
 }
 
-pub fn i32_vec_to_string_vec(vec: Vec<i32>) -> Vec<String> {
-    vec.into_iter().map(|i| i.to_string()).collect()
+pub fn i32_vec_to_string_vec(vec: &Vec<i32>) -> Vec<String> {
+    let mut buffer = itoa::Buffer::new();
+    vec.iter().map(|i| buffer.format(*i).to_string()).collect()
 }
 
-pub fn id_complex_to_string_vec(vec: Vec<IDComplexType>) -> Vec<String> {
-    vec.into_iter().map(|id_complex| id_complex.value).collect()
+pub fn id_complex_to_string_vec(vec: &Vec<IDComplexType>) -> Vec<String> {
+    vec.into_iter()
+        .map(|id_complex| id_complex.value.clone())
+        .collect()
 }
 
-pub fn f32_vec_to_string_vec(vec: Vec<f32>) -> Vec<String> {
+pub fn f32_vec_to_string_vec(vec: &Vec<f32>) -> Vec<String> {
     let mut res: Vec<String> = Vec::new();
 
     for &value in vec.iter() {
@@ -42,7 +46,8 @@ pub fn f32_vec_to_string_vec(vec: Vec<f32>) -> Vec<String> {
 
 pub fn u32_to_string_vec(vec: u32) -> Vec<String> {
     if vec != 4294967295 {
-        return vec![vec.to_string()];
+        let mut buffer = itoa::Buffer::new();
+        return vec![buffer.format(vec).to_string()];
     }
 
     vec!["nil".to_string()]
@@ -50,7 +55,8 @@ pub fn u32_to_string_vec(vec: u32) -> Vec<String> {
 
 pub fn u64_to_string_vec(vec: u64) -> Vec<String> {
     if vec != 18446744073709551615 {
-        return vec![vec.to_string()];
+        let mut buffer = itoa::Buffer::new();
+        return vec![buffer.format(vec).to_string()];
     }
 
     vec!["nil".to_string()]
@@ -58,7 +64,8 @@ pub fn u64_to_string_vec(vec: u64) -> Vec<String> {
 
 pub fn u16_to_string_vec(vec: u16) -> Vec<String> {
     if vec != 65535 {
-        return vec![vec.to_string()];
+        let mut buffer = itoa::Buffer::new();
+        return vec![buffer.format(vec).to_string()];
     }
 
     vec!["nil".to_string()]
@@ -66,39 +73,40 @@ pub fn u16_to_string_vec(vec: u16) -> Vec<String> {
 
 pub fn i16_to_string_vec(vec: i16) -> Vec<String> {
     if vec != 32767 {
-        return vec![vec.to_string()];
+        let mut buffer = itoa::Buffer::new();
+        return vec![buffer.format(vec).to_string()];
     }
 
     vec!["nil".to_string()]
 }
 
 pub fn single_to_string(vec: f32) -> String {
-    let mut text = String::from("nil");
-
     if vec.fract() != 0.0 || vec >= 1e7 {
-        text.clear();
         let bytes = vec.to_le_bytes();
+        let mut hex_string = String::with_capacity(9);
+
+        hex_string.push('&');
 
         for &b in bytes.iter().rev() {
-            text.push_str(&format!("{:02x}", b));
+            use std::fmt::Write;
+            write!(&mut hex_string, "{:02x}", b).unwrap();
         }
 
-        text.insert(0, '&');
+        hex_string
     } else {
-        text = format!("{:.0}", vec as i32);
+        format!("{:.0}", vec as i32)
     }
-
-    text
 }
 
-pub fn u16_vec_to_string_vec(vec: Vec<u16>) -> Vec<String> {
-    vec.into_iter().map(|u| u.to_string()).collect()
+pub fn u16_vec_to_string_vec(vec: &Vec<u16>) -> Vec<String> {
+    let mut buffer = itoa::Buffer::new();
+    vec.iter().map(|i| buffer.format(*i).to_string()).collect()
 }
 
-pub fn u32_vec_to_string_vec(vec: Vec<u32>) -> Vec<String> {
+pub fn u32_vec_to_string_vec(vec: &Vec<u32>) -> Vec<String> {
     vec.into_iter()
         .map(|u| {
-            if u != 4294967295 {
+            if *u != 4294967295 {
                 return u.to_string();
             }
 
@@ -107,24 +115,32 @@ pub fn u32_vec_to_string_vec(vec: Vec<u32>) -> Vec<String> {
         .collect()
 }
 
-pub fn u64_vec_to_string_vec(vec: Vec<u64>) -> Vec<String> {
-    vec.into_iter().map(|u| u.to_string()).collect()
+pub fn u64_vec_to_string_vec(vec: &Vec<u64>) -> Vec<String> {
+    let mut buffer = itoa::Buffer::new();
+    vec.iter().map(|i| buffer.format(*i).to_string()).collect()
 }
 
-pub fn vec3_u32_to_string(vec: Int32Vector3i32) -> String {
+pub fn vec3_u32_to_string(vec: &Int32Vector3i32) -> String {
+    let mut buffer_a = itoa::Buffer::new();
+    let mut buffer_b = itoa::Buffer::new();
+    let mut buffer_c = itoa::Buffer::new();
+
     format!(
         "({}, {}, {})",
-        vec.a.to_string(),
-        vec.b.to_string(),
-        vec.c.to_string()
+        buffer_a.format(vec.a),
+        buffer_b.format(vec.b),
+        buffer_c.format(vec.c)
     )
 }
 
-pub fn vec2_u32_to_string(vec: Int32Vector2) -> String {
-    format!("({}, {})", vec.a.to_string(), vec.b.to_string(),)
+pub fn vec2_u32_to_string(vec: &Int32Vector2) -> String {
+    let mut buffer_a = itoa::Buffer::new();
+    let mut buffer_b = itoa::Buffer::new();
+
+    format!("({}, {})", buffer_a.format(vec.a), buffer_b.format(vec.b))
 }
 
-pub fn single_vector_3_to_string(vec: SingleVector3) -> String {
+pub fn single_vector_3_to_string(vec: &SingleVector3) -> String {
     format!(
         "({}, {}, {})",
         single_to_string(vec.a),
@@ -133,7 +149,7 @@ pub fn single_vector_3_to_string(vec: SingleVector3) -> String {
     )
 }
 
-pub fn single_vector_4_to_string(vec: SingleVector4) -> String {
+pub fn single_vector_4_to_string(vec: &SingleVector4) -> String {
     format!(
         "({}; {}, {}, {})",
         single_to_string(vec.a),
@@ -143,7 +159,7 @@ pub fn single_vector_4_to_string(vec: SingleVector4) -> String {
     )
 }
 
-pub fn single_vector_7_to_string(vec: SingleVector7) -> String {
+pub fn single_vector_7_to_string(vec: &SingleVector7) -> String {
     format!(
         "({}, {}, {}) ({}; {}, {}, {})",
         single_to_string(vec.a),
@@ -156,7 +172,7 @@ pub fn single_vector_7_to_string(vec: SingleVector7) -> String {
     )
 }
 
-pub fn single_vector_8_to_string(vec: SingleVector8) -> String {
+pub fn single_vector_8_to_string(vec: &SingleVector8) -> String {
     format!(
         "({}, {}, {}) ({}; {}, {}, {})",
         single_to_string(vec.a),
@@ -169,21 +185,21 @@ pub fn single_vector_8_to_string(vec: SingleVector8) -> String {
     )
 }
 
-pub fn single_vector_2_string(vec: SingleVector2) -> String {
+pub fn single_vector_2_string(vec: &SingleVector2) -> String {
     format!("({}, {})", single_to_string(vec.a), single_to_string(vec.b))
 }
 
-pub fn single_vector_2_vec_to_string_vec(vec: Vec<SingleVector2>) -> Vec<String> {
+pub fn single_vector_2_vec_to_string_vec(vec: &Vec<SingleVector2>) -> Vec<String> {
     let mut string_vec: Vec<String> = Vec::new();
 
     for single_vec2 in vec {
-        string_vec.push(single_vector_2_string(single_vec2));
+        string_vec.push(single_vector_2_string(&single_vec2));
     }
 
     string_vec
 }
 
-pub fn i32_vec3_to_string_vec(vec: Vec<Int32Vector3i32>) -> Vec<String> {
+pub fn i32_vec3_to_string_vec(vec: &Vec<Int32Vector3i32>) -> Vec<String> {
     let mut string_vec: Vec<String> = Vec::new();
 
     for i32_vec3 in vec {
@@ -193,7 +209,7 @@ pub fn i32_vec3_to_string_vec(vec: Vec<Int32Vector3i32>) -> Vec<String> {
     string_vec
 }
 
-pub fn single_vector_3_vec_to_string_vec(vec: Vec<SingleVector3>) -> Vec<String> {
+pub fn single_vector_3_vec_to_string_vec(vec: &Vec<SingleVector3>) -> Vec<String> {
     let mut string_vec: Vec<String> = Vec::new();
 
     for single_vec3 in vec {
@@ -203,7 +219,7 @@ pub fn single_vector_3_vec_to_string_vec(vec: Vec<SingleVector3>) -> Vec<String>
     string_vec
 }
 
-pub fn single_vector_4_vec_to_string_vec(vec: Vec<SingleVector4>) -> Vec<String> {
+pub fn single_vector_4_vec_to_string_vec(vec: &Vec<SingleVector4>) -> Vec<String> {
     let mut string_vec: Vec<String> = Vec::new();
 
     for single_vec4 in vec {
@@ -213,7 +229,7 @@ pub fn single_vector_4_vec_to_string_vec(vec: Vec<SingleVector4>) -> Vec<String>
     string_vec
 }
 
-pub fn single_vector_7_vec_to_string_vec(vec: Vec<SingleVector7>) -> Vec<String> {
+pub fn single_vector_7_vec_to_string_vec(vec: &Vec<SingleVector7>) -> Vec<String> {
     let mut string_vec: Vec<String> = Vec::new();
 
     for single_vec7 in vec {
@@ -223,7 +239,7 @@ pub fn single_vector_7_vec_to_string_vec(vec: Vec<SingleVector7>) -> Vec<String>
     string_vec
 }
 
-pub fn single_vector_8_vec_to_string_vec(vec: Vec<SingleVector8>) -> Vec<String> {
+pub fn single_vector_8_vec_to_string_vec(vec: &Vec<SingleVector8>) -> Vec<String> {
     let mut string_vec: Vec<String> = Vec::new();
 
     for single_vec8 in vec {
@@ -233,10 +249,12 @@ pub fn single_vector_8_vec_to_string_vec(vec: Vec<SingleVector8>) -> Vec<String>
     string_vec
 }
 
-pub fn i64_vec_to_string_vec(vec: Vec<i64>) -> Vec<String> {
-    vec.into_iter().map(|i| i.to_string()).collect()
+pub fn i64_vec_to_string_vec(vec: &Vec<i64>) -> Vec<String> {
+    let mut buffer = itoa::Buffer::new();
+    vec.iter().map(|i| buffer.format(*i).to_string()).collect()
 }
 
-pub fn i16_vec_to_string_vec(vec: Vec<i16>) -> Vec<String> {
-    vec.into_iter().map(|i| i.to_string()).collect()
+pub fn i16_vec_to_string_vec(vec: &Vec<i16>) -> Vec<String> {
+    let mut buffer = itoa::Buffer::new();
+    vec.iter().map(|i| buffer.format(*i).to_string()).collect()
 }
