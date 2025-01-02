@@ -1,4 +1,4 @@
-use crate::strucs::data_sii::{BSIIData, BsiiDataSegment, BsiiStructureBlock};
+use crate::strucs::data_sii::{BSIIData, BsiiDataSegment, BsiiStructureDecodedBlock};
 use crate::strucs::sii_types::DataTypeIdFormat;
 
 static IDENT: &str = " ";
@@ -9,7 +9,7 @@ const LIMITED_ALPHABET: [char; 63] = [
     'V', 'W', 'X', 'Y', 'Z', '_',
 ];
 
-fn segment_serialize(block: &BsiiStructureBlock, header_version: u32) -> String {
+fn segment_serialize(block: &BsiiStructureDecodedBlock, header_version: u32) -> String {
     let mut str_build = String::new();
 
     for segment in &block.segments {

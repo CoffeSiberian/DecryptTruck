@@ -1,7 +1,7 @@
 use crate::decoder::bsii_serializer;
 use crate::decoder::load_data_block::load_data_block_local;
 use crate::strucs::data_sii::{
-    BSIIData, BsiiDataSegment, BsiiStructureBlock, BsiiSupportedVersions,
+    BSIIData, BsiiDataSegment, BsiiStructureBlock, BsiiStructureDecodedBlock, BsiiSupportedVersions,
 };
 use crate::strucs::sii_types::DataTypeIdFormat;
 use crate::utils::decode_utils;
@@ -70,6 +70,8 @@ fn block_type_cero(
         Err(e) => return Err(e),
     };
 
+    println!("Block: {}", current_block.structure_id);
+
     let mut segment_type = 999;
 
     while segment_type != 0 {
@@ -124,6 +126,7 @@ pub fn decode(file_bin: &[u8]) -> Result<Vec<u8>, String> {
         return Err("Unsupported version".to_string());
     }
 
+    let mut decode_block_count: u32 = 0;
     loop {
         if stream_pos >= file_bin.len() {
             break;
@@ -155,8 +158,10 @@ pub fn decode(file_bin: &[u8]) -> Result<Vec<u8>, String> {
                 None => return Err("Block not found".to_string()),
             };
 
-            let mut block_data = BsiiStructureBlock::new();
+            let mut block_data = BsiiStructureDecodedBlock::new();
 
+            decode_block_count += 1;
+            block_data.order_pos = decode_block_count;
             block_data.structure_id = block_data_item.structure_id;
             block_data.name = block_data_item.name.clone();
             block_data.block_type = block_data_item.block_type;

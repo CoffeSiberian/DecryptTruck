@@ -1,4 +1,4 @@
-use crate::strucs::data_sii::BsiiStructureBlock;
+use crate::strucs::data_sii::BsiiStructureDecodedBlock;
 use crate::strucs::sii_types::DataTypeIdFormat;
 use crate::utils::{decode_utils, serialize};
 use std::collections::HashMap;
@@ -6,7 +6,7 @@ use std::collections::HashMap;
 pub fn load_data_block_local(
     bytes: &[u8],
     stream_pos: &mut usize,
-    segment: &mut BsiiStructureBlock,
+    segment: &mut BsiiStructureDecodedBlock,
     format_version: u32,
     values: &mut HashMap<u32, String>,
 ) -> Result<(), String> {

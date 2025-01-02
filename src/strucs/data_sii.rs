@@ -27,7 +27,7 @@ pub enum BsiiSupportedVersions {
 pub struct BSIIData {
     pub header: BSIIHeader,
     pub blocks: Vec<BsiiStructureBlock>,
-    pub decoded_blocks: Vec<BsiiStructureBlock>,
+    pub decoded_blocks: Vec<BsiiStructureDecodedBlock>,
 }
 
 pub struct IDComplexType {
@@ -41,13 +41,23 @@ pub struct BSIIHeader {
     pub version: u32,
 }
 
-pub struct BsiiStructureBlock {
+pub struct BsiiStructureDecodedBlock {
+    pub order_pos: u32,
     pub block_type: u32,
     pub structure_id: u32,
     pub validity: bool,
     pub name: String,
     pub segments: Vec<BsiiDataSegment>,
     pub id: IDComplexType,
+}
+
+pub struct BsiiStructureBlock {
+    pub block_type: u32,
+    pub structure_id: u32,
+    pub validity: bool,
+    pub name: String,
+    pub segments: Vec<BsiiDataSegment>,
+    pub _id: IDComplexType,
 }
 
 pub struct BsiiDataSegment {
@@ -76,6 +86,20 @@ impl BSIIHeader {
     }
 }
 
+impl BsiiStructureDecodedBlock {
+    pub fn new() -> Self {
+        BsiiStructureDecodedBlock {
+            order_pos: 0,
+            block_type: 0,
+            structure_id: 0,
+            validity: false,
+            name: String::new(),
+            segments: Vec::new(),
+            id: IDComplexType::new(),
+        }
+    }
+}
+
 impl BsiiStructureBlock {
     pub fn new() -> Self {
         BsiiStructureBlock {
@@ -84,7 +108,7 @@ impl BsiiStructureBlock {
             validity: false,
             name: String::new(),
             segments: Vec::new(),
-            id: IDComplexType::new(),
+            _id: IDComplexType::new(),
         }
     }
 }
