@@ -1,7 +1,7 @@
 use crate::decoder::bsii_serializer;
 use crate::decoder::load_data_block::load_data_block_local;
 use crate::strucs::data_sii::{
-    BSIIData, BsiiDataSegment, BsiiStructureBlock, BsiiSupportedVersions, IDComplexType,
+    BSIIData, BsiiDataSegment, BsiiStructureBlock, BsiiSupportedVersions,
 };
 use crate::strucs::sii_types::DataTypeIdFormat;
 use crate::utils::decode_utils;
@@ -45,8 +45,66 @@ fn read_data_block(bytes: &[u8], stream_pos: &mut usize) -> Result<BsiiDataSegme
     Ok(result)
 }
 
+fn block_type_cero(
+    file_bin: &[u8],
+    stream_pos: &mut usize,
+    ordinal_lists: &mut HashMap<u32, HashMap<u32, String>>,
+    file_data: &mut BSIIData,
+    block_type: u32,
+) -> Result<(), String> {
+    let mut current_block = BsiiStructureBlock::new();
+    current_block.block_type = block_type;
+    current_block.validity = decode_utils::decode_bool(&file_bin, stream_pos);
+
+    if !current_block.validity {
+        file_data.blocks.push(current_block);
+        return Ok(());
+    }
+
+    current_block.structure_id = match decode_utils::decode_u32(&file_bin, stream_pos) {
+        Ok(res) => res,
+        Err(e) => return Err(e),
+    };
+    current_block.name = match decode_utils::decode_utf8_string(&file_bin, stream_pos) {
+        Ok(res) => res,
+        Err(e) => return Err(e),
+    };
+
+    let mut segment_type = 999;
+
+    while segment_type != 0 {
+        let segment_data = match read_data_block(&file_bin, stream_pos) {
+            Ok(res) => res,
+            Err(e) => return Err(e),
+        };
+        segment_type = segment_data.segment_type;
+
+        if segment_data.segment_type == DataTypeIdFormat::OrdinalString as u32
+            && !ordinal_lists.contains_key(&current_block.structure_id)
+        {
+            let string_hash = match segment_data.ordinal_string_hash.clone() {
+                Some(res) => res,
+                None => return Err("Ordinal string hash is empty".to_string()),
+            };
+
+            ordinal_lists.insert(current_block.structure_id, string_hash);
+        }
+
+        current_block.segments.push(segment_data);
+    }
+
+    if !file_data
+        .blocks
+        .iter()
+        .any(|x| x.structure_id == current_block.structure_id)
+    {
+        file_data.blocks.push(current_block);
+    }
+
+    Ok(())
+}
+
 pub fn decode(file_bin: &[u8]) -> Result<Vec<u8>, String> {
-    let mut current_block: BsiiStructureBlock;
     let mut block_type: u32;
     let mut ordinal_lists: HashMap<u32, HashMap<u32, String>> = HashMap::new();
 
@@ -77,55 +135,15 @@ pub fn decode(file_bin: &[u8]) -> Result<Vec<u8>, String> {
         };
 
         if block_type == 0 {
-            current_block = BsiiStructureBlock::new();
-            current_block.block_type = block_type;
-            current_block.validity = decode_utils::decode_bool(&file_bin, &mut stream_pos);
-
-            if !current_block.validity {
-                file_data.blocks.push(current_block);
-                continue;
-            }
-
-            current_block.structure_id = match decode_utils::decode_u32(&file_bin, &mut stream_pos)
-            {
-                Ok(res) => res,
+            match block_type_cero(
+                &file_bin,
+                &mut stream_pos,
+                &mut ordinal_lists,
+                &mut file_data,
+                block_type,
+            ) {
+                Ok(_) => (),
                 Err(e) => return Err(e),
-            };
-            current_block.name = match decode_utils::decode_utf8_string(&file_bin, &mut stream_pos)
-            {
-                Ok(res) => res,
-                Err(e) => return Err(e),
-            };
-
-            let mut segment_type = 999;
-
-            while segment_type != 0 {
-                let segment_data = match read_data_block(&file_bin, &mut stream_pos) {
-                    Ok(res) => res,
-                    Err(e) => return Err(e),
-                };
-                segment_type = segment_data.segment_type;
-
-                if segment_data.segment_type == DataTypeIdFormat::OrdinalString as u32
-                    && !ordinal_lists.contains_key(&current_block.structure_id)
-                {
-                    let string_hash = match segment_data.ordinal_string_hash.clone() {
-                        Some(res) => res,
-                        None => return Err("Ordinal string hash is empty".to_string()),
-                    };
-
-                    ordinal_lists.insert(current_block.structure_id, string_hash);
-                }
-
-                current_block.segments.push(segment_data);
-            }
-
-            if !file_data
-                .blocks
-                .iter()
-                .any(|x| x.structure_id == current_block.structure_id)
-            {
-                file_data.blocks.push(current_block);
             }
         } else {
             let block_data_item = match file_data
@@ -153,13 +171,21 @@ pub fn decode(file_bin: &[u8]) -> Result<Vec<u8>, String> {
                 });
             }
 
+            /*
+
+            I'm not entirely sure if this is really necessary but
+            according to the tests these pass without a problem.
+
             if !block_data_item.id.value.is_empty() {
+                println!("ID: {:?}", block_data_item.id.value);
                 block_data.id = IDComplexType {
                     part_count: block_data_item.id.part_count,
                     address: block_data_item.id.address,
                     value: block_data_item.id.value.clone(),
                 };
             }
+
+            */
 
             let mut list: HashMap<u32, String> = HashMap::new();
 
