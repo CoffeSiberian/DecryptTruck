@@ -1,7 +1,8 @@
 use crate::decoder::bsii_serializer;
 use crate::decoder::load_data_block::load_data_block_local;
 use crate::strucs::data_sii::{
-    BSIIData, BsiiDataSegment, BsiiStructureBlock, BsiiStructureDecodedBlock, BsiiSupportedVersions,
+    BSIIData, BsiiDataSegment, BsiiStructureBlock, BsiiStructureDecodedBlock,
+    BsiiSupportedVersions, IDComplexType,
 };
 use crate::strucs::sii_types::DataTypeIdFormat;
 use crate::utils::decode_utils;
@@ -45,7 +46,7 @@ fn read_data_block(bytes: &[u8], stream_pos: &mut usize) -> Result<BsiiDataSegme
     Ok(result)
 }
 
-fn block_type_cero(
+fn structure_block(
     file_bin: &[u8],
     stream_pos: &mut usize,
     ordinal_lists: &mut HashMap<u32, HashMap<u32, String>>,
@@ -69,8 +70,6 @@ fn block_type_cero(
         Ok(res) => res,
         Err(e) => return Err(e),
     };
-
-    println!("Block: {}", current_block.structure_id);
 
     let mut segment_type = 999;
 
@@ -106,6 +105,77 @@ fn block_type_cero(
     Ok(())
 }
 
+fn data_block(
+    file_bin: &[u8],
+    stream_pos: &mut usize,
+    ordinal_lists: &mut HashMap<u32, HashMap<u32, String>>,
+    file_data: &mut BSIIData,
+    block_type: u32,
+    decode_block_count: &mut u32,
+) -> Result<(), String> {
+    let block_data_item = match file_data
+        .blocks
+        .iter()
+        .find(|block| block.structure_id == block_type)
+    {
+        Some(block) => block,
+        None => return Err("Block not found".to_string()),
+    };
+
+    let mut block_data = BsiiStructureDecodedBlock::new();
+
+    *decode_block_count += 1;
+    block_data.order_pos = *decode_block_count;
+    block_data.structure_id = block_data_item.structure_id;
+    block_data.name = block_data_item.name.clone();
+    block_data.block_type = block_data_item.block_type;
+    block_data.validity = block_data_item.validity;
+
+    for segment in &block_data_item.segments {
+        block_data.segments.push(BsiiDataSegment {
+            name: segment.name.clone(),
+            segment_type: segment.segment_type,
+            value: segment.value.clone(),
+            ordinal_string_hash: segment.ordinal_string_hash.clone(),
+        });
+    }
+
+    /*
+
+    I'm not entirely sure if this is really necessary but
+    according to the tests these pass without a problem.
+
+    */
+
+    if !block_data_item.id.value.is_empty() {
+        block_data.id = IDComplexType {
+            part_count: block_data_item.id.part_count,
+            address: block_data_item.id.address,
+            value: block_data_item.id.value.clone(),
+        };
+    }
+
+    let mut list: HashMap<u32, String> = HashMap::new();
+
+    if let Some(existing_list) = ordinal_lists.get(&block_data.structure_id) {
+        list = existing_list.clone();
+    }
+
+    match load_data_block_local(
+        &file_bin,
+        stream_pos,
+        &mut block_data,
+        file_data.header.version,
+        &mut list,
+    ) {
+        Ok(_) => (),
+        Err(e) => return Err(e),
+    }
+
+    file_data.decoded_blocks.push(block_data);
+    Ok(())
+}
+
 pub fn decode(file_bin: &[u8]) -> Result<Vec<u8>, String> {
     let mut block_type: u32;
     let mut ordinal_lists: HashMap<u32, HashMap<u32, String>> = HashMap::new();
@@ -138,7 +208,7 @@ pub fn decode(file_bin: &[u8]) -> Result<Vec<u8>, String> {
         };
 
         if block_type == 0 {
-            match block_type_cero(
+            match structure_block(
                 &file_bin,
                 &mut stream_pos,
                 &mut ordinal_lists,
@@ -149,67 +219,17 @@ pub fn decode(file_bin: &[u8]) -> Result<Vec<u8>, String> {
                 Err(e) => return Err(e),
             }
         } else {
-            let block_data_item = match file_data
-                .blocks
-                .iter()
-                .find(|block| block.structure_id == block_type)
-            {
-                Some(block) => block,
-                None => return Err("Block not found".to_string()),
-            };
-
-            let mut block_data = BsiiStructureDecodedBlock::new();
-
-            decode_block_count += 1;
-            block_data.order_pos = decode_block_count;
-            block_data.structure_id = block_data_item.structure_id;
-            block_data.name = block_data_item.name.clone();
-            block_data.block_type = block_data_item.block_type;
-            block_data.validity = block_data_item.validity;
-
-            for segment in &block_data_item.segments {
-                block_data.segments.push(BsiiDataSegment {
-                    name: segment.name.clone(),
-                    segment_type: segment.segment_type,
-                    value: segment.value.clone(),
-                    ordinal_string_hash: segment.ordinal_string_hash.clone(),
-                });
-            }
-
-            /*
-
-            I'm not entirely sure if this is really necessary but
-            according to the tests these pass without a problem.
-
-            if !block_data_item.id.value.is_empty() {
-                println!("ID: {:?}", block_data_item.id.value);
-                block_data.id = IDComplexType {
-                    part_count: block_data_item.id.part_count,
-                    address: block_data_item.id.address,
-                    value: block_data_item.id.value.clone(),
-                };
-            }
-
-            */
-
-            let mut list: HashMap<u32, String> = HashMap::new();
-
-            if let Some(existing_list) = ordinal_lists.get(&block_data.structure_id) {
-                list = existing_list.clone();
-            }
-
-            match load_data_block_local(
+            match data_block(
                 &file_bin,
                 &mut stream_pos,
-                &mut block_data,
-                file_data.header.version,
-                &mut list,
+                &mut ordinal_lists,
+                &mut file_data,
+                block_type,
+                &mut decode_block_count,
             ) {
                 Ok(_) => (),
                 Err(e) => return Err(e),
             }
-
-            file_data.decoded_blocks.push(block_data);
         }
     }
 

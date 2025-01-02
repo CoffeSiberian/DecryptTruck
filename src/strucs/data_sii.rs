@@ -57,7 +57,7 @@ pub struct BsiiStructureBlock {
     pub validity: bool,
     pub name: String,
     pub segments: Vec<BsiiDataSegment>,
-    pub _id: IDComplexType,
+    pub id: IDComplexType,
 }
 
 pub struct BsiiDataSegment {
@@ -108,7 +108,7 @@ impl BsiiStructureBlock {
             validity: false,
             name: String::new(),
             segments: Vec::new(),
-            _id: IDComplexType::new(),
+            id: IDComplexType::new(),
         }
     }
 }
