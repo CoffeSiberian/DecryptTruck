@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": ["./tests/test_data/encrypted_sig/game.sii"],
             "cwd": "${workspaceFolder}"
         },
         {
