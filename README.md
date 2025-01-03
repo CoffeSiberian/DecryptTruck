@@ -25,7 +25,7 @@ Then you will need to use this command to start the build.
 cargo build --release
 ```
 
-Once the process is finished. The binary will remain in `./target/release/decrypt_truck.exe`
+Once the process is finished. The binary will remain in `./target/release/decrypt_truck`
 
 ## Credits
 
