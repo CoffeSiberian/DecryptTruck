@@ -113,23 +113,24 @@ fn data_block(
     block_type: u32,
     decode_block_count: &mut u32,
 ) -> Result<(), String> {
-    let block_data_item = match file_data
+    *decode_block_count += 1;
+
+    let mut block_data_item = match file_data
         .blocks
         .iter()
         .find(|block| block.structure_id == block_type)
     {
-        Some(block) => block,
+        Some(block) => BsiiStructureDecodedBlock {
+            order_pos: *decode_block_count,
+            id: block.id.clone(),
+            structure_id: block.structure_id,
+            name: block.name.clone(),
+            segments: block.segments.clone(),
+        },
         None => return Err("Block not found".to_string()),
     };
 
-    let mut block_data = BsiiStructureDecodedBlock::new();
-
-    *decode_block_count += 1;
-    block_data.order_pos = *decode_block_count;
-    block_data.structure_id = block_data_item.structure_id;
-    block_data.name = block_data_item.name.clone();
-    block_data.block_type = block_data_item.block_type;
-    block_data.validity = block_data_item.validity;
+    /*
 
     for segment in &block_data_item.segments {
         block_data.segments.push(BsiiDataSegment {
@@ -140,6 +141,8 @@ fn data_block(
         });
     }
 
+    */
+
     /*
 
     I'm not entirely sure if this is really necessary but
@@ -148,7 +151,7 @@ fn data_block(
     */
 
     if !block_data_item.id.value.is_empty() {
-        block_data.id = IDComplexType {
+        block_data_item.id = IDComplexType {
             part_count: block_data_item.id.part_count,
             address: block_data_item.id.address,
             value: block_data_item.id.value.clone(),
@@ -157,14 +160,14 @@ fn data_block(
 
     let mut list: HashMap<u32, String> = HashMap::new();
 
-    if let Some(existing_list) = ordinal_lists.get(&block_data.structure_id) {
+    if let Some(existing_list) = ordinal_lists.get(&block_data_item.structure_id) {
         list = existing_list.clone();
     }
 
     match load_data_block_local(
         &file_bin,
         stream_pos,
-        &mut block_data,
+        &mut block_data_item,
         file_data.header.version,
         &mut list,
     ) {
@@ -172,7 +175,7 @@ fn data_block(
         Err(e) => return Err(e),
     }
 
-    file_data.decoded_blocks.push(block_data);
+    file_data.decoded_blocks.push(block_data_item);
     Ok(())
 }
 
@@ -196,10 +199,9 @@ pub fn decode(file_bin: &[u8]) -> Result<Vec<u8>, String> {
         return Err("Unsupported version".to_string());
     }
 
-    let mut decode_block_count: u32 = 0;
     loop {
         if stream_pos >= file_bin.len() {
-            break;
+            return Err("End of file".to_string());
         }
 
         block_type = match decode_utils::decode_u32(&file_bin, &mut stream_pos) {
@@ -219,17 +221,46 @@ pub fn decode(file_bin: &[u8]) -> Result<Vec<u8>, String> {
                 Err(e) => return Err(e),
             }
         } else {
-            match data_block(
-                &file_bin,
-                &mut stream_pos,
-                &mut ordinal_lists,
-                &mut file_data,
-                block_type,
-                &mut decode_block_count,
-            ) {
-                Ok(_) => (),
+            break;
+        }
+    }
+
+    let mut decode_block_count: u32 = 0;
+    let mut firt_load_block = true;
+    loop {
+        if stream_pos >= file_bin.len() {
+            break;
+        }
+        if firt_load_block {
+            firt_load_block = false;
+        } else {
+            block_type = match decode_utils::decode_u32(&file_bin, &mut stream_pos) {
+                Ok(res) => res,
                 Err(e) => return Err(e),
+            };
+        }
+
+        if block_type == 0 {
+            let mut current_block = BsiiStructureBlock::new();
+            current_block.block_type = block_type;
+            current_block.validity = decode_utils::decode_bool(&file_bin, &mut stream_pos);
+
+            if !current_block.validity {
+                file_data.blocks.push(current_block);
+                break;
             }
+        }
+
+        match data_block(
+            &file_bin,
+            &mut stream_pos,
+            &mut ordinal_lists,
+            &mut file_data,
+            block_type,
+            &mut decode_block_count,
+        ) {
+            Ok(_) => (),
+            Err(e) => return Err(e),
         }
     }
 

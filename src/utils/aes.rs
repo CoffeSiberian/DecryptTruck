@@ -68,6 +68,5 @@ pub fn decrypt(encrypted: &[u8]) -> Result<SIIData, String> {
 
     Ok(SIIData {
         data: decrypted_data.to_vec(),
-        header,
     })
 }

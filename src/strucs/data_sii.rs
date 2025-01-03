@@ -12,9 +12,8 @@ pub struct SIIHeader {
     pub data_size: u32,
 }
 
-#[allow(dead_code)]
 pub struct SIIData {
-    pub header: SIIHeader,
+    //pub header: SIIHeader,
     pub data: Vec<u8>,
 }
 
@@ -30,6 +29,7 @@ pub struct BSIIData {
     pub decoded_blocks: Vec<BsiiStructureDecodedBlock>,
 }
 
+#[derive(Clone)]
 pub struct IDComplexType {
     pub part_count: u8,
     pub address: u64,
@@ -43,14 +43,15 @@ pub struct BSIIHeader {
 
 pub struct BsiiStructureDecodedBlock {
     pub order_pos: u32,
-    pub block_type: u32,
+    //pub block_type: u32,
     pub structure_id: u32,
-    pub validity: bool,
+    //pub validity: bool,
     pub name: String,
     pub segments: Vec<BsiiDataSegment>,
     pub id: IDComplexType,
 }
 
+#[derive(Clone)]
 pub struct BsiiStructureBlock {
     pub block_type: u32,
     pub structure_id: u32,
@@ -60,6 +61,7 @@ pub struct BsiiStructureBlock {
     pub id: IDComplexType,
 }
 
+#[derive(Clone)]
 pub struct BsiiDataSegment {
     pub name: String,
     pub segment_type: u32,
@@ -82,20 +84,6 @@ impl BSIIHeader {
         BSIIHeader {
             signature: 0,
             version: 0,
-        }
-    }
-}
-
-impl BsiiStructureDecodedBlock {
-    pub fn new() -> Self {
-        BsiiStructureDecodedBlock {
-            order_pos: 0,
-            block_type: 0,
-            structure_id: 0,
-            validity: false,
-            name: String::new(),
-            segments: Vec::new(),
-            id: IDComplexType::new(),
         }
     }
 }
