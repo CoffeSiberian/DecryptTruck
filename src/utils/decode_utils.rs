@@ -674,11 +674,24 @@ pub fn get_ordinal_string_from_values(
     values: &std::collections::HashMap<u32, String>,
     bytes: &[u8],
     offset: &mut usize,
+    segments_name: Option<&String>,
 ) -> Result<String, String> {
     let index = match decode_u32(bytes, offset) {
         Ok(res) => res,
         Err(err) => return Err(err),
     };
+
+    /*
+    Support for external decryptors (more data types possible)
+    */
+    match segments_name {
+        Some(name) => match name.as_str() {
+            "lashing_method" => return Ok("none".to_string()),
+            "lashing_gear_type" => return Ok("none".to_string()),
+            _ => (),
+        },
+        None => (),
+    }
 
     if let Some(value) = values.get(&index) {
         Ok(value.clone())

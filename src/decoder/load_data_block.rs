@@ -259,11 +259,15 @@ pub fn load_data_block_local(
                 continue;
             }
             x if x == DataTypeIdFormat::OrdinalString as i32 => {
-                let res =
-                    match decode_utils::get_ordinal_string_from_values(values, bytes, stream_pos) {
-                        Ok(res) => res,
-                        Err(e) => return Err(e),
-                    };
+                let res = match decode_utils::get_ordinal_string_from_values(
+                    values,
+                    bytes,
+                    stream_pos,
+                    Some(&segment.segments[i].name),
+                ) {
+                    Ok(res) => res,
+                    Err(e) => return Err(e),
+                };
 
                 segment.segments[i].value = vec![res];
                 continue;
